@@ -16,7 +16,7 @@ export default function ListarAlunos() {
     const [filterText, setFilterText] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8081/alunosdb/alunos")
+        fetch("http://localhost:8081/alunos/ServletAluno?cmd=listar")
             .then((response) => response.json())
             .then((data) => {
                 setAlunos(data);

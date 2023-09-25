@@ -1,13 +1,14 @@
-import ListarAlunos from "./components/ListarAlunos";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.min.js';
+import { useState } from 'react'
+import ListarAlunos from './components/ListarAlunos'
+
 function App() {
+
 
   return (
     <>
-    <ListarAlunos />
+      <ListarAlunos />
     </>
-  );
+  )
 }
 
-export default App;
+export default App
