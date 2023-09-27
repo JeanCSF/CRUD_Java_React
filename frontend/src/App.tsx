@@ -6,12 +6,20 @@ import './App.css';
 
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
-import { BsArrowBarUp, BsArrowBarDown, BsFillGearFill, BsFillPencilFill, BsTrash3 } from 'react-icons/bs';
+import {
+  BsPersonPlusFill,
+  BsArrowBarUp,
+  BsArrowBarDown,
+  BsFillGearFill,
+  BsFillPencilFill,
+  BsTrash3
+} from 'react-icons/bs';
 
 
 import BootstrapPagination from './components/BootstrapPagination';
 import BootstrapToast from './components/BootstrapToast';
 import DeleteModal from './components/DeleteModal';
+import FormModal from './components/FormModal';
 
 interface Aluno {
   ra: number;
@@ -34,6 +42,7 @@ function App() {
   const [alunoToDelete, setAlunoToDelete] = useState<number | null>(null);
 
   const [showModal, setShowModal] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -102,8 +111,14 @@ function App() {
 
   return (
     <div className="container-fluid">
-      <BootstrapToast show={showToast} message={toastMessage} onClose={() => setShowToast(false)} />
-      <h1>Sistema Academico</h1>
+      <BootstrapToast
+        show={showToast}
+        message={toastMessage}
+        onClose={() => setShowToast(false)} />
+      <div className="d-flex justify-content-between align-items-center">
+        <h1>Sistema Academico</h1>
+        <Button onClick={() => setShowFormModal(true)} className="border-0 bg-transparent" title="Adicionar Aluno"><BsPersonPlusFill className="fs-1 text-success" /></Button>
+      </div>
       <div className="table-responsive">
         <Table striped bordered hover>
           <thead>
@@ -133,9 +148,13 @@ function App() {
                     {aluno.nome}
                     {isSmallScreen && (
                       selectedAluno != aluno ?
-                        <BsArrowBarDown onClick={() => handleRowClick(aluno)} className="ms-2 text-primary" />
+                        <BsArrowBarDown
+                          onClick={() => handleRowClick(aluno)}
+                          className="ms-2 text-primary" />
                         :
-                        <BsArrowBarUp onClick={() => handleRowClick(aluno)} className="ms-2 text-primary" />
+                        <BsArrowBarUp
+                          onClick={() => handleRowClick(aluno)}
+                          className="ms-2 text-primary" />
                     )}
                     {selectedAluno === aluno && isSmallScreen && (
                       <div className="aluno-details">
@@ -182,6 +201,10 @@ function App() {
         show={showModal}
         onHide={handleCloseModal}
         onConfirm={handleConfirmDelete}
+      />
+      <FormModal
+        show={showFormModal}
+        onHide={() => setShowFormModal(false)}
       />
     </div>
   )
