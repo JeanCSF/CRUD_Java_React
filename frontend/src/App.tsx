@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFetch } from './hooks/useFetch';
+import axios from 'axios';
+
+import './App.css';
+
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
-import { BsFillGearFill, BsFillPencilFill, BsTrash3 } from 'react-icons/bs';
+import { BsArrowBarUp, BsArrowBarDown, BsFillGearFill, BsFillPencilFill, BsTrash3 } from 'react-icons/bs';
 
-import axios from 'axios';
 
 import BootstrapPagination from './components/BootstrapPagination';
 import BootstrapToast from './components/BootstrapToast';
@@ -20,8 +23,13 @@ interface Aluno {
 }
 
 function App() {
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
   const fetchResult = useFetch<Aluno[]>('/ServletAluno?cmd=listar');
-  const alunos = fetchResult.data || [];
+  useEffect(() => {
+    if (fetchResult.data) {
+      setAlunos(fetchResult.data);
+    }
+  }, [fetchResult.data]);
   const isFetching = fetchResult.isFetching;
   const [alunoToDelete, setAlunoToDelete] = useState<number | null>(null);
 
@@ -35,6 +43,24 @@ function App() {
   const endIndex = startIndex + pageSize;
   const totalPages = Math.ceil(alunos.length / pageSize);
   const maxVisibleButtons = 1;
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const maxWidthForSmallScreen = 768;
+  window.addEventListener('resize', () => {
+    setWindowWidth(window.innerWidth);
+  });
+  const isSmallScreen = windowWidth <= maxWidthForSmallScreen;
+
+  const [selectedAluno, setSelectedAluno] = useState(null);
+  const handleRowClick = (aluno) => {
+    if (isSmallScreen) {
+      if (selectedAluno === aluno) {
+        setSelectedAluno(null);
+      } else {
+        setSelectedAluno(aluno);
+      }
+    }
+  };
 
   const onPageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -64,6 +90,7 @@ function App() {
       setShowToast(true);
       setAlunoToDelete(null);
       setShowModal(false);
+      setAlunos((prevAlunos) => prevAlunos.filter((aluno) => aluno.ra !== alunoToDelete));
     } catch (error) {
       console.error("Erro na requisição:", error);
     }
@@ -74,20 +101,20 @@ function App() {
   };
 
   return (
-    <div className="d-flex justify-content-between align-items-center flex-column">
+    <div className="container-fluid">
       <BootstrapToast show={showToast} message={toastMessage} onClose={() => setShowToast(false)} />
       <h1>Sistema Academico</h1>
-      <div className="row w-75">
+      <div className="table-responsive">
         <Table striped bordered hover>
           <thead>
             <tr>
               <th>RA</th>
               <th>Nome</th>
-              <th>Email</th>
-              <th>Endereço</th>
-              <th>Nascimento</th>
-              <th>Periodo</th>
-              <th className="text-center"><BsFillGearFill /></th>
+              <th className="d-none d-sm-table-cell">Email</th>
+              <th className="d-none d-md-table-cell">Endereço</th>
+              <th className="d-none d-md-table-cell">Nascimento</th>
+              <th className="d-none d-lg-table-cell">Periodo</th>
+              <th className="text-center d-none d-lg-table-cell"><BsFillGearFill /></th>
             </tr>
           </thead>
           <tbody>
@@ -102,32 +129,60 @@ function App() {
               return (
                 <tr key={aluno.ra}>
                   <td>{aluno.ra}</td>
-                  <td>{aluno.nome}</td>
-                  <td>{aluno.email}</td>
-                  <td>{aluno.endereco}</td>
-                  <td>{aluno.dataNascimento}</td>
-                  <td>{aluno.periodo}</td>
-                  <td className="d-flex justify-content-evenly">
-                    <Button className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
-                    <Button onClick={() => handleDeleteClick(aluno.ra)} className="border-0 bg-transparent text-danger"><BsTrash3 /></Button>
+                  <td className="nowrap">
+                    {aluno.nome}
+                    {isSmallScreen && (
+                      selectedAluno != aluno ?
+                        <BsArrowBarDown onClick={() => handleRowClick(aluno)} className="ms-2 text-primary" />
+                        :
+                        <BsArrowBarUp onClick={() => handleRowClick(aluno)} className="ms-2 text-primary" />
+                    )}
+                    {selectedAluno === aluno && isSmallScreen && (
+                      <div className="aluno-details">
+                        <hr />
+                        <p>Email: {selectedAluno.email}</p>
+                        <p>Endereço: {selectedAluno.endereco}</p>
+                        <p>Nascimento: {selectedAluno.dataNascimento}</p>
+                        <p>Periodo: {selectedAluno.periodo}</p>
+                        <hr />
+                        <p className="d-flex justify-content-between">
+                          <Button
+                            className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
+                          <Button
+                            onClick={() => handleDeleteClick(selectedAluno.ra)}
+                            className="border-0 bg-transparent text-danger"><BsTrash3 /></Button>
+                        </p>
+                      </div>
+                    )}
+                  </td>
+                  <td className="d-none d-sm-table-cell">{aluno.email}</td>
+                  <td className="d-none d-md-table-cell nowrap">{aluno.endereco}</td>
+                  <td className="d-none d-md-table-cell nowrap">{aluno.dataNascimento}</td>
+                  <td className="d-none d-lg-table-cell">{aluno.periodo}</td>
+                  <td className="text-center d-none d-lg-table-cell">
+                    <Button
+                      className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
+                    <Button
+                      onClick={() => handleDeleteClick(aluno.ra)}
+                      className="border-0 bg-transparent text-danger"><BsTrash3 /></Button>
                   </td>
                 </tr>
               )
             })}
           </tbody>
         </Table>
-        <BootstrapPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-          maxVisibleButtons={maxVisibleButtons}
-        />
-        <DeleteModal
-          show={showModal}
-          onHide={handleCloseModal}
-          onConfirm={handleConfirmDelete}
-        />
       </div>
+      <BootstrapPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        maxVisibleButtons={maxVisibleButtons}
+      />
+      <DeleteModal
+        show={showModal}
+        onHide={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }
