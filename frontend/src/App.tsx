@@ -39,12 +39,14 @@ function App() {
     }
   }, [fetchResult.data]);
   const isFetching = fetchResult.isFetching;
+  const [alunoToEdit, setAlunoToEdit] = useState(null);
   const [alunoToDelete, setAlunoToDelete] = useState<number | null>(null);
 
   const [showModal, setShowModal] = useState(false);
-  const [showFormModal, setShowFormModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  const [showFormModal, setShowFormModal] = useState(false);
 
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,6 +70,46 @@ function App() {
       } else {
         setSelectedAluno(aluno);
       }
+    }
+  };
+
+  const [formData, setFormaData] = useState({
+    txtRa: '',
+    txtNome: '',
+    txtEmail: '',
+    txtEndereco: '',
+    txtData: '',
+    cmbPeriodo: 'Manhã'
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormaData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:8081/alunos/ServletAluno?cmd=${alunoToEdit ? 'atualizar' : 'incluir'
+        }`,
+        formData
+      );
+
+      if (response.status !== 200) {
+        const errorResponse = response.data;
+        throw new Error(`Erro na requisição: ${errorResponse.message}`);
+      }
+
+      const responseData = response.data;
+      setToastMessage(responseData.message);
+      setShowToast(true);
+      setAlunoToEdit(null);
+      setShowFormModal(false);
+    } catch (error) {
+      console.error('Erro na requisição:', error);
     }
   };
 
@@ -109,6 +151,12 @@ function App() {
     setShowModal(false);
   };
 
+  const handleCloseFormModal = () => {
+    setShowFormModal(false);
+    setAlunoToEdit(null);
+    setFormaData({ ...formData })
+  }
+
   return (
     <div className="container-fluid">
       <BootstrapToast
@@ -117,7 +165,12 @@ function App() {
         onClose={() => setShowToast(false)} />
       <div className="d-flex justify-content-between align-items-center">
         <h1>Sistema Academico</h1>
-        <Button onClick={() => setShowFormModal(true)} className="border-0 bg-transparent" title="Adicionar Aluno"><BsPersonPlusFill className="fs-1 text-success" /></Button>
+        <Button
+          onClick={() => setShowFormModal(true)}
+          className="border-0 bg-transparent"
+          title="Adicionar Aluno">
+          <BsPersonPlusFill className="fs-1 text-success" />
+        </Button>
       </div>
       <div className="table-responsive">
         <Table striped bordered hover>
@@ -166,6 +219,11 @@ function App() {
                         <hr />
                         <p className="d-flex justify-content-between">
                           <Button
+                            onClick={() => {
+                              setAlunoToEdit(aluno);
+                              setShowFormModal(true);
+                              setFormaData(aluno)
+                            }}
                             className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
                           <Button
                             onClick={() => handleDeleteClick(selectedAluno.ra)}
@@ -180,6 +238,10 @@ function App() {
                   <td className="d-none d-lg-table-cell">{aluno.periodo}</td>
                   <td className="text-center d-none d-lg-table-cell">
                     <Button
+                      onClick={() => {
+                        setAlunoToEdit(aluno);
+                        setShowFormModal(true);
+                      }}
                       className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
                     <Button
                       onClick={() => handleDeleteClick(aluno.ra)}
@@ -204,7 +266,11 @@ function App() {
       />
       <FormModal
         show={showFormModal}
-        onHide={() => setShowFormModal(false)}
+        onHide={handleCloseFormModal}
+        alunoToEdit={alunoToEdit}
+        handleSubmit={handleSubmit}
+        handleChange={handleChange}
+        formData={formData}
       />
     </div>
   )
