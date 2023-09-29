@@ -9,7 +9,7 @@ export default function BootstrapToast({ show, message, onClose }) {
     }, [show]);
 
     return (
-        <Toast show={showToast} onClose={onClose} delay={3000} autohide position='top-start' style={{ zIndex: 1, position: 'absolute' }}>
+        <Toast show={showToast} onClose={onClose} delay={3000} autohide className="position-absolute top-start" style={{zIndex: 9999}}>
             <Toast.Header>
                 <strong className="me-auto">Sistema Academico</strong>
                 <small>agora</small>

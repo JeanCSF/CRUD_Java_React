@@ -8,35 +8,10 @@ import Select from 'react-bootstrap/Select';
 
 export default function FormModal({ show, onHide, alunoToEdit, handleSubmit, handleChange, formData }) {
 
-    const formatDataNascimento = (dateString) => {
-        const months = {
-            jan: '01',
-            fev: '02',
-            mar: '03',
-            abr: '04',
-            mai: '05',
-            jun: '06',
-            jul: '07',
-            ago: '08',
-            set: '09',
-            out: '10',
-            nov: '11',
-            dez: '12',
-        };
-
-        const parts = dateString.match(/(\w+)\.\s(\d+),\s(\d+)/);
-        if (parts) {
-            const [, month, day, year] = parts;
-            const formattedDate = `${year}-${months[month.toLowerCase()]}-${day.padStart(2, '0')}`;
-            return formattedDate;
-        }
-
-        return dateString;
-    };
-
     return (
         <Modal
             show={show}
+            onHide={onHide}
             size="lg"
             aria-labelledby="contained-modal-title-vcenter"
             centered>
@@ -62,7 +37,7 @@ export default function FormModal({ show, onHide, alunoToEdit, handleSubmit, han
                             <Form.Control
                                 type="text"
                                 name="txtNome"
-                                value={alunoToEdit ? alunoToEdit.nome : formData.txtNome}
+                                value={formData.txtNome}
                                 onChange={handleChange}
                             />
                         </Form.Group>
@@ -73,7 +48,7 @@ export default function FormModal({ show, onHide, alunoToEdit, handleSubmit, han
                             <Form.Control
                                 type="email"
                                 name="txtEmail"
-                                value={alunoToEdit ? alunoToEdit.email : formData.txtEmail}
+                                value={formData.txtEmail}
                                 onChange={handleChange}
                             />
                         </Form.Group>
@@ -82,7 +57,7 @@ export default function FormModal({ show, onHide, alunoToEdit, handleSubmit, han
                             <Form.Control
                                 type="text"
                                 name="txtEndereco"
-                                value={alunoToEdit ? alunoToEdit.endereco : formData.txtEndereco}
+                                value={formData.txtEndereco}
                                 onChange={handleChange}
                             />
                         </Form.Group>
@@ -93,7 +68,7 @@ export default function FormModal({ show, onHide, alunoToEdit, handleSubmit, han
                             <Form.Control
                                 type="date"
                                 name="txtData"
-                                value={alunoToEdit ? formatDataNascimento(alunoToEdit.dataNascimento) : formData.txtData}
+                                value={formData.txtData}
                                 onChange={handleChange}
                             />
                         </Form.Group>
@@ -101,7 +76,7 @@ export default function FormModal({ show, onHide, alunoToEdit, handleSubmit, han
                             <Form.Label>Período:</Form.Label>
                             <Form.Select
                                 name="cmbPeriodo"
-                                value={alunoToEdit ? alunoToEdit.periodo : formData.cmbPeriodo}
+                                value={formData.cmbPeriodo}
                                 onChange={handleChange}
                             >
                                 <option value="Manhã">Manhã</option>
