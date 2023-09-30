@@ -1,8 +1,8 @@
-import axios, { AxiosRequestConfig } from "../../node_modules/axios/index";
+import axios, { AxiosRequestConfig } from "axios";
 import { useState, useEffect } from "react";
 
 const api = axios.create({
-    baseURL: 'http://localhost:8081/alunos'
+    baseURL: 'http://localhost:8080/alunos'
 })
 
 export function useFetch<T = unknown>(url: string, options?: AxiosRequestConfig) {

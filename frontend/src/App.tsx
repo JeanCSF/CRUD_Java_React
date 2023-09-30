@@ -23,26 +23,35 @@ import BootstrapToast from './components/BootstrapToast';
 import DeleteModal from './components/DeleteModal';
 import FormModal from './components/FormModal';
 
-interface Aluno {
+export interface Aluno {
   ra: number;
   nome: string;
   email: string;
   endereco: string;
-  dataNascimento: Date;
+  dataNascimento: Date | null;
   periodo: string;
+}
+export interface FormData {
+  txtRa: string;
+  txtNome: string;
+  txtEmail: string;
+  txtEndereco: string;
+  txtData: string;
+  cmbPeriodo: string;
 }
 
 function App() {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const fetchResult = useFetch<Aluno[]>('/ServletAluno?cmd=listar');
+  const fetchResult = useFetch<Aluno[]>('/api?cmd=listar');
   useEffect(() => {
     if (fetchResult.data) {
       setAlunos(fetchResult.data);
     }
   }, [fetchResult.data]);
   const isFetching = fetchResult.isFetching;
-  const [alunoToEdit, setAlunoToEdit] = useState(null);
+  const [alunoToEdit, setAlunoToEdit] = useState<Aluno | null>(null);
   const [alunoToDelete, setAlunoToDelete] = useState<number | null>(null);
+  const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null);
 
   const [filtro, setFiltro] = useState("");
   const filteredAlunos = alunos.filter((aluno) =>
@@ -55,7 +64,6 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-
   const [showFormModal, setShowFormModal] = useState(false);
 
   const pageSize = 10;
@@ -67,13 +75,12 @@ function App() {
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const maxWidthForSmallScreen = 768;
+  const isSmallScreen = windowWidth <= maxWidthForSmallScreen;
   window.addEventListener('resize', () => {
     setWindowWidth(window.innerWidth);
   });
-  const isSmallScreen = windowWidth <= maxWidthForSmallScreen;
 
-  const [selectedAluno, setSelectedAluno] = useState(null);
-  const handleRowClick = (aluno) => {
+  const handleRowClick = (aluno: Aluno) => {
     if (isSmallScreen) {
       if (selectedAluno === aluno) {
         setSelectedAluno(null);
@@ -83,8 +90,8 @@ function App() {
     }
   };
 
-  const formatDataNascimento = (dateString) => {
-    const months = {
+  const formatDataNascimento = (dateString: string) => {
+    const months: { [key: string]: string } = {
       jan: '01',
       fev: '02',
       mar: '03',
@@ -109,6 +116,27 @@ function App() {
     return dateString;
   };
 
+  function parseData(dataString: string): Date | null {
+    const parts = dataString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!parts) {
+    
+      return null;
+    }
+  
+    const [_, year, month, day] = parts;
+    const data = new Date(Number(year), Number(month) - 1, Number(day));
+  
+    if (
+      data.getFullYear() === Number(year) &&
+      data.getMonth() === Number(month) - 1 &&
+      data.getDate() === Number(day)
+    ) {
+      return data;
+    } else {
+      return null;
+    }
+  };
+
   const [formData, setFormData] = useState({
     txtRa: '',
     txtNome: '',
@@ -118,7 +146,7 @@ function App() {
     cmbPeriodo: 'Manhã'
   });
 
-  const handleAlunoAddOrUpdate = (aluno) => {
+  const handleAlunoAddOrUpdate = (aluno: Aluno) => {
     const alunoExistente = alunos.find((a) => a.ra === aluno.ra);
 
     if (alunoExistente) {
@@ -133,11 +161,11 @@ function App() {
   useEffect(() => {
     if (alunoToEdit) {
       setFormData({
-        txtRa: alunoToEdit.ra,
+        txtRa: `${alunoToEdit.ra}`,
         txtNome: alunoToEdit.nome,
         txtEmail: alunoToEdit.email,
         txtEndereco: alunoToEdit.endereco,
-        txtData: formatDataNascimento(alunoToEdit.dataNascimento),
+        txtData: formatDataNascimento(`${alunoToEdit.dataNascimento}`),
         cmbPeriodo: alunoToEdit.periodo
       });
     } else {
@@ -153,7 +181,14 @@ function App() {
     }
   }, [alunoToEdit])
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -181,7 +216,7 @@ function App() {
     };
 
     const emptyFields = Object.entries(validationRules)
-      .filter(([fieldName, fieldValue]) => !fieldValue)
+      .filter(([fieldValue]) => !fieldValue)
       .map(([fieldName]) => fieldName);
 
     if (emptyFields.length > 0) {
@@ -192,7 +227,7 @@ function App() {
     }
 
     const params = {
-      ra: txtRa,
+      ra: parseInt(txtRa),
       nome: txtNome,
       email: txtEmail,
       endereco: txtEndereco,
@@ -201,7 +236,7 @@ function App() {
     }
     try {
       if (!alunoToEdit) {
-        const response = await axios.get(`http://localhost:8081/alunos/ServletAluno?cmd=checkra&ra=${txtRa}`);
+        const response = await axios.get(`http://localhost:8080/alunos/api?cmd=checkra&ra=${txtRa}`);
         const data = await response.data
 
         if (data.sucesso == false) {
@@ -211,7 +246,7 @@ function App() {
         }
       }
       const response = await axios.post(
-        `http://localhost:8081/alunos/ServletAluno?cmd=${alunoToEdit ? 'atualizar' : 'incluir'
+        `http://localhost:8080/alunos/api?cmd=${alunoToEdit ? 'atualizar' : 'incluir'
         }`,
         params
       );
@@ -224,9 +259,24 @@ function App() {
       const responseData = response.data;
       setToastMessage(responseData.message);
       setShowToast(true);
-      handleAlunoAddOrUpdate(params);
+      handleAlunoAddOrUpdate({
+        ra: parseInt(txtRa),
+        nome: txtNome,
+        email: txtEmail,
+        endereco: txtEndereco,
+        dataNascimento: parseData(txtData),
+        periodo: cmbPeriodo,
+      });
       setAlunoToEdit(null);
       setShowFormModal(false);
+      setFormData({
+        txtRa: '',
+        txtNome: '',
+        txtEmail: '',
+        txtEndereco: '',
+        txtData: '',
+        cmbPeriodo: 'Manhã'
+      });
     } catch (error) {
       console.error('Erro na requisição:', error);
     }
@@ -243,7 +293,7 @@ function App() {
 
   const handleConfirmDelete = async () => {
     try {
-      const response = await axios.post(`http://localhost:8081/alunos/ServletAluno?cmd=excluir&ra=${alunoToDelete}`, {
+      const response = await axios.post(`http://localhost:8080/alunos/api?cmd=excluir&ra=${alunoToDelete}`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -316,7 +366,7 @@ function App() {
           <tbody>
             {isFetching &&
               <tr key="loading">
-                <td colSpan="7">
+                <td colSpan={7}>
                   <p className="text-center text-primary fw-bold fs-3">Carregando...</p>
                 </td>
               </tr>
@@ -343,7 +393,7 @@ function App() {
                           <hr />
                           <p>Email: {selectedAluno.email}</p>
                           <p>Endereço: {selectedAluno.endereco}</p>
-                          <p>Nascimento: {selectedAluno.dataNascimento}</p>
+                          <p>Nascimento: {`${selectedAluno.dataNascimento}`}</p>
                           <p>Periodo: {selectedAluno.periodo}</p>
                           <hr />
                           <p className="d-flex justify-content-between">
@@ -351,7 +401,14 @@ function App() {
                               onClick={() => {
                                 setAlunoToEdit(aluno);
                                 setShowFormModal(true);
-                                setFormData(aluno)
+                                setFormData({
+                                  txtRa: aluno.ra.toString(),
+                                  txtNome: aluno.nome,
+                                  txtEmail: aluno.email,
+                                  txtEndereco: aluno.endereco,
+                                  txtData: formatDataNascimento(`${aluno.dataNascimento}`),
+                                  cmbPeriodo: aluno.periodo,
+                                });
                               }}
                               className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
                             <Button
@@ -363,7 +420,7 @@ function App() {
                     </td>
                     <td className="d-none d-sm-table-cell">{aluno.email}</td>
                     <td className="d-none d-md-table-cell nowrap">{aluno.endereco}</td>
-                    <td className="d-none d-md-table-cell nowrap">{aluno.dataNascimento}</td>
+                    <td className="d-none d-md-table-cell nowrap">{`${aluno.dataNascimento}`}</td>
                     <td className="d-none d-lg-table-cell">{aluno.periodo}</td>
                     <td className="text-center d-none d-lg-table-cell">
                       <Button
@@ -401,7 +458,7 @@ function App() {
                           <hr />
                           <p>Email: {selectedAluno.email}</p>
                           <p>Endereço: {selectedAluno.endereco}</p>
-                          <p>Nascimento: {selectedAluno.dataNascimento}</p>
+                          <p>Nascimento: {`${selectedAluno.dataNascimento}`}</p>
                           <p>Periodo: {selectedAluno.periodo}</p>
                           <hr />
                           <p className="d-flex justify-content-between">
@@ -409,7 +466,14 @@ function App() {
                               onClick={() => {
                                 setAlunoToEdit(aluno);
                                 setShowFormModal(true);
-                                setFormData(aluno)
+                                setFormData({
+                                  txtRa: aluno.ra.toString(),
+                                  txtNome: aluno.nome,
+                                  txtEmail: aluno.email,
+                                  txtEndereco: aluno.endereco,
+                                  txtData: formatDataNascimento(`${aluno.dataNascimento}`),
+                                  cmbPeriodo: aluno.periodo,
+                                });
                               }}
                               className="border-0 bg-transparent text-primary"><BsFillPencilFill /></Button>
                             <Button
@@ -421,7 +485,7 @@ function App() {
                     </td>
                     <td className="d-none d-sm-table-cell">{aluno.email}</td>
                     <td className="d-none d-md-table-cell nowrap">{aluno.endereco}</td>
-                    <td className="d-none d-md-table-cell nowrap">{aluno.dataNascimento}</td>
+                    <td className="d-none d-md-table-cell nowrap">{`${aluno.dataNascimento}`}</td>
                     <td className="d-none d-lg-table-cell">{aluno.periodo}</td>
                     <td className="text-center d-none d-lg-table-cell">
                       <Button
@@ -458,10 +522,11 @@ function App() {
         alunoToEdit={alunoToEdit}
         handleSubmit={handleSubmit}
         handleChange={handleChange}
+        handleSelectChange={handleSelectChange}
         formData={formData}
       />
     </div>
   )
 }
 
-export default App
+export default App;

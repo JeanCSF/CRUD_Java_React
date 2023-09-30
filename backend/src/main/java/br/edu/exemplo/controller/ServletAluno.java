@@ -1,23 +1,16 @@
 package br.edu.exemplo.controller;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import br.edu.exemplo.dao.AlunoDAO;
 import br.edu.exemplo.model.Aluno;
@@ -25,16 +18,9 @@ import br.edu.exemplo.model.Aluno;
 /**
  * Servlet implementation class ServletAluno
  */
-@WebServlet("/ServletAluno")
+@WebServlet("/api")
 public class ServletAluno extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-
-	// metodo para conversao de String para data
-	private Date strToDate(String data) throws Exception {
-		SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd");
-		Date dataF = formato.parse(data);
-		return dataF;
-	}
 
 	Aluno aluno = new Aluno();
 	Gson gson = new Gson();

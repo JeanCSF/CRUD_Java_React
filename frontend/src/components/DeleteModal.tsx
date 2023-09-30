@@ -1,9 +1,14 @@
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
+interface DeleteModalProps {
+    show: boolean;
+    onHide: () => void;
+    onConfirm: () => void;
+}
 
-export default function DeleteModal({show, onHide, onConfirm}) {
+export default function DeleteModal(props: DeleteModalProps) {
     return (
-        <Modal show={show} onHide={onHide}>
+        <Modal show={props.show} onHide={props.onHide}>
             <Modal.Header closeButton>
                 <Modal.Title>Confirmar Exclusão</Modal.Title>
             </Modal.Header>
@@ -11,8 +16,8 @@ export default function DeleteModal({show, onHide, onConfirm}) {
                 Tem certeza de que deseja excluir este aluno?
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancelar</Button>
-                <Button variant="danger" onClick={onConfirm}>Excluir</Button>
+                <Button variant="secondary" onClick={props.onHide}>Cancelar</Button>
+                <Button variant="danger" onClick={props.onConfirm}>Excluir</Button>
             </Modal.Footer>
         </Modal>
     );
